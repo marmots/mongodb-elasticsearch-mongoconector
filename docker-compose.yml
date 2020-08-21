@@ -22,7 +22,6 @@ services:
         - action.auto_create_index=true
       ports:
           - "9200:9200"
-          - "9300:9300"
           
     mongoconnector:
       image: python:buster
@@ -41,5 +40,6 @@ services:
           pip install elastic2-doc-manager
           pip install 'mongo-connector[elastic5]'
           pip install elasticsearch==6.0.0
+          curl -X PUT http://elasticsearch:9200/ecommerce 
           mongo-connector -m mongodb:27017 -t elasticsearch:9200 -n ecommerce.articlemongo -d elastic2_doc_manager
         "
