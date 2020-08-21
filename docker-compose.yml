@@ -1,0 +1,45 @@
+version: '3.4'
+
+services:
+    mongodb:
+      image: mongo:bionic
+      container_name: mongodb
+      hostname: mongodb
+      ports:
+          - "27017:27017"
+      healthcheck:
+          test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo --quiet) -eq 1
+          interval: 60s
+          start_period: 30s
+      command: ["--replSet", "singleNodeRepl"]
+      
+    elasticsearch:
+      image: elasticsearch:7.9.0
+      container_name: elasticsearch
+      hostname: elasticsearch
+      environment: 
+        - discovery.type=single-node
+        - action.auto_create_index=true
+      ports:
+          - "9200:9200"
+          - "9300:9300"
+          
+    mongoconnector:
+      image: python:buster
+      container_name: mongoconnector
+      hostname: mongoconnector
+      depends_on:
+        - mongodb
+        - elasticsearch
+      links:
+        - mongodb:mongodb
+        - elasticsearch:elasticsearch
+      command: > 
+        /bin/bash -c "
+          sleep 60
+          pip install mongo-connector
+          pip install elastic2-doc-manager
+          pip install 'mongo-connector[elastic5]'
+          pip install elasticsearch==6.0.0
+          mongo-connector -m mongodb:27017 -t elasticsearch:9200 -n ecommerce.articlemongo -d elastic2_doc_manager
+        "
